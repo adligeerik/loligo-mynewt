@@ -57,8 +57,7 @@ static int32_t SI1133_calcEvalPoly(int32_t x, int32_t y, uint8_t input_fraction,
                                    uint8_t output_fraction, uint8_t num_coeff,
                                    SI1133_Coeff_TypeDef *kp);
 
-/* For LED toggling */
-int g_led_pin;
+
 
 
 
@@ -166,7 +165,6 @@ uint32_t SI1133_waitUntilSleep(void){
         if (ret != SI1133_OK) {
             retval = SI1133_ERROR_SLEEP_FAILED;
             console_printf("Sleep faild \n");
-            //console_printf("ret: 0x%08" PRIx32 "\n", ret);
             break;
         }
 
@@ -780,78 +778,3 @@ uint32_t SI1133_init(void){
     return rc;
 } 
 
-///**
-// * main
-// *
-// * The main task for the project. This function initializes packages,
-// * and then blinks the BSP LED in a loop.
-// *
-// * @return int NOTE: this function should never return!
-// */
-//int main(int argc, char **argv)
-//{
-//
-//
-//#ifdef ARCH_sim
-//    mcu_sim_parse_args(argc, argv);
-//#endif
-//
-//    sysinit();
-//
-//    int rc = 1;
-//
-//    ///////////
-//    SI1133_reset();
-//    os_time_delay(10);
-//    uint8_t response;
-//    SI1133_registerRead(SI1133_REG_RESPONSE0, &response);
-//    console_printf("resp: 0x%X\n", response);
-//    printf("Leading text "BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(response));
-//    os_time_delay(10);
-//    SI1133_registerWrite(SI1133_PARAM_ADCCONFIG2, 0xA5);
-//    os_time_delay(10);
-//    SI1133_registerWrite(SI1133_PARAM_ADCSENS2, 0x95);
-//    SI1133_registerRead(SI1133_REG_RESPONSE0, &response);
-//    console_printf("resp: 0x%X\n", response);
-//    printf("Leading text "BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(response));
-//    ///////////
-//
-//    g_led_pin = LED_BLINK_PIN;
-//    hal_gpio_init_out(g_led_pin, 1);
-//    hal_gpio_write(g_led_pin,1);
-//    
-//    while(rc){
-//        os_time_delay(OS_TICKS_PER_SEC); 
-//        rc = SI1133_init();
-//        if(rc){
-//            console_printf("faild to init");
-//            console_printf("\n");
-//        }else{
-//            console_printf("succeeded to init");
-//            console_printf("\n");
-//        }
-//    }
-//
-//    for (;;) {
-//        ++g_task1_loops;
-//
-//        
-//        //read(SI1133_REG_IRQ_STATUS,&val);  
-//        //uint8_t hardwareID;
-//        //SI1133_getHardwareID(&hardwareID);
-//        float lux,uvi;
-//        SI1133_measureLuxUvif(&lux, &uvi);
-//
-//        os_time_delay(OS_TICKS_PER_SEC*5);
-//
-//        /* Toggle the LED */
-//        hal_gpio_toggle(g_led_pin);
-//
-//    }
-//
-//
-//    assert(0);
-//
-//
-//    return rc;
-//}

@@ -132,9 +132,7 @@ typedef struct {
 #define SI1133_RSP0_CHIPSTAT_MASK 0xE0
 #define SI1133_RSP0_COUNTER_MASK 0x1F
 #define SI1133_RSP0_SLEEP 0x20
-
-
-
+/***************************************************************************/
 
 
 uint32_t SI1133_registerWrite(uint8_t reg, uint8_t data);

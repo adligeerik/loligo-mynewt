@@ -777,4 +777,14 @@ uint32_t SI1133_init(void){
 
     return rc;
 } 
+ 
 
+// TODO config function
+int si1133_congif(){
+
+    wuint32_t rc;
+    uint8_t val;
+
+    rc = SI1133_init();
+
+}

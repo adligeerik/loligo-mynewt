@@ -211,6 +211,8 @@ main(int argc, char **argv)
     sysinit();
 
     init_timer();
+
+    os_time_delay(OS_TICKS_PER_SEC*5);
     
     /* As the last thing, process events from default event queue. */
     while (1) {

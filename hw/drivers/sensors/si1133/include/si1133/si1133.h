@@ -23,6 +23,18 @@
 #define SI1133_ERROR_I2C_TRANSACTION_FAILED 0x0001
 #define SI1133_ERROR_SLEEP_FAILED 0x0002
 
+/***************************************************************************/
+struct si1133_cfg{
+    uint8_t int_enable;
+    sensor_type_t mask;
+}
+/***************************************************************************/
+struct si1133 {
+    struct os_dev dev,
+    struct sensor sensor;
+    struct si1133_cfg cfg;
+    os_time_t last_read_time;
+}
 
 /***************************************************************************/
 typedef struct {

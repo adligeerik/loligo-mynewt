@@ -171,6 +171,7 @@ static void sensor_timer_ev_cb(struct os_event *ev) {
     int i=0;
     while (sensor_types[i] != SENSOR_TYPE_NONE)
     {
+        console_printf("i: %d \n", i);
         s = sensor_mgr_find_next_bytype(sensor_types[i], NULL);
         if (s)
         {

@@ -173,7 +173,7 @@ uint32_t SI1133_measurementGet(SI1133_Samples_TypeDef *samples);
 int32_t SI1133_getUv(int32_t uv, SI1133_Coeff_TypeDef *uk);
 int32_t SI1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir, SI1133_LuxCoeff_TypeDef *lk);
 uint32_t SI1133_measureLuxUvif(float *lux, float *uvi);
-uint32_t SI1133_measureLuxUvi(int32_t *lux, int32_t *uvi);
+uint32_t SI1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi);
 uint32_t SI1133_getHardwareID(uint8_t *hardwareID);
 uint32_t SI1133_getMeasurementf(float *lux, float *uvi);
 uint32_t SI1133_getMeasurement(int32_t *lux, int32_t *uvi);

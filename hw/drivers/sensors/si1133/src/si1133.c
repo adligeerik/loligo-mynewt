@@ -488,7 +488,7 @@ int32_t SI1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir,
     return lux;
 }
 
-uint32_t SI1133_measureLuxUvi(int32_t *lux, int32_t *uvi)
+uint32_t SI1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi)
 {
 
     SI1133_Samples_TypeDef samples;
@@ -825,7 +825,7 @@ static int si1133_sensor_read(struct sensor *sensor, sensor_type_t type,
     si1 = (struct si1133 *) SENSOR_GET_DEVICE(sensor);
 
     if (type & (SENSOR_TYPE_LIGHT)){
-        rc = SI1133_measureLuxUvi(&lux, &uvi);
+        rc = SI1133_measureLuxUvi(si1, &lux, &uvi);
 
         if(rc) {
             return rc;

@@ -179,7 +179,7 @@ uint32_t SI1133_getMeasurementf(float *lux, float *uvi);
 uint32_t SI1133_getMeasurement(int32_t *lux, int32_t *uvi);
 uint32_t SI1133_getIrqStatus(uint8_t *irqStatus);
 uint32_t SI1133_enableIrq0(bool enable);
-uint32_t si1133_config(void);
+uint32_t si1133_config(struct si1133 *si1, struct si1133_cfg *cfg);
 int si1133_init(struct os_dev *dev, void *arg);
 
 #ifdef __cplusplus

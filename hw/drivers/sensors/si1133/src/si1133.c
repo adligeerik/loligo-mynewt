@@ -857,7 +857,7 @@ uint32_t si1133_config(struct si1133 *si1, struct si1133_cfg *cfg){
 } 
  
 
-int si1133_init(void *arg){
+int si1133_init(struct os_dev *dev, void *arg){
     
     struct si1133 *si1;
     struct sensor *sensor;
@@ -866,6 +866,8 @@ int si1133_init(void *arg){
     si1 = (struct si1133 *) dev;
 
     si1->cfg.mask = SENSOR_TYPE_ALL;
+
+    sensor = &si1->sensor;
 
     rc = sensor_init(sensor, dev);
     if(rc){
@@ -890,7 +892,7 @@ int si1133_init(void *arg){
 }
 
 static int si1133_sensor_read(struct sensor *sensor, sensor_type_t type,
-        sensor_data_func_t data_func, void *data_arg, unti32_t timeout){
+        sensor_data_func_t data_func, void *data_arg, uint32_t timeout){
     (void)timeout;
     int rc;
     int32_t lux, uvi;
@@ -915,12 +917,13 @@ static int si1133_sensor_read(struct sensor *sensor, sensor_type_t type,
 
         rc = data_func(sensor, data_arg, &sld, SENSOR_TYPE_LIGHT);
         if (rc) {
-            return rc
+            return rc;
         }
     }
+    return 0;
 }
 
-static int si1144_sensor_get_config(struct sensor *sensor, sensor_type_t type,
+static int si1133_sensor_get_config(struct sensor *sensor, sensor_type_t type,
         struct sensor_cfg *cfg){
     if (!(type & (SENSOR_TYPE_LIGHT))) {
         return SYS_EINVAL;
@@ -928,5 +931,5 @@ static int si1144_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     cfg->sc_valtype = SENSOR_VALUE_TYPE_INT32;
 
-    return 0
+    return 0;
 }

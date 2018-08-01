@@ -25,7 +25,6 @@ extern "C" {
 #define NUMCOEFF_HIGH 4
 /***************************************************************************/
 
-#define I2C_ADDRESS 0b1010101
 #define SI1133_OK 0x0000
 #define SI1133_ERROR_I2C_TRANSACTION_FAILED 0x0001
 #define SI1133_ERROR_SLEEP_FAILED 0x0002
@@ -157,8 +156,10 @@ typedef struct {
 
 uint32_t SI1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data);
 uint32_t SI1133_registerRead(struct si1133 *dev, uint8_t reg, uint8_t *data);
-uint32_t SI1133_registerBlockRead(struct si1133 *dev, uint8_t reg, uint8_t length, uint8_t *data);
-uint32_t SI1133_registerBlockWrite(struct si1133 *dev, uint8_t reg, uint8_t length, uint8_t *data);
+uint32_t SI1133_registerBlockRead(struct si1133 *dev, uint8_t reg,
+        uint8_t length, uint8_t *data);
+uint32_t SI1133_registerBlockWrite(struct si1133 *dev, uint8_t reg,
+        uint8_t length, uint8_t *data);
 uint32_t SI1133_reset(struct si1133 *dev);
 uint32_t SI1133_resetCmdCtr(struct si1133 *dev);
 uint32_t SI1133_measurementForce(struct si1133 *dev);
@@ -169,14 +170,17 @@ uint32_t SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value);
 uint32_t SI1133_paramRead(struct si1133 *dev, uint8_t address);
 uint32_t SI1133_init(void);
 uint32_t SI1133_deInit(struct si1133 *dev);
-uint32_t SI1133_measurementGet(struct si1133 *dev, SI1133_Samples_TypeDef *samples);
+uint32_t SI1133_measurementGet(struct si1133 *dev,
+        SI1133_Samples_TypeDef *samples);
 int32_t SI1133_getUv(int32_t uv, SI1133_Coeff_TypeDef *uk);
-int32_t SI1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir, SI1133_LuxCoeff_TypeDef *lk);
+int32_t SI1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir,
+        SI1133_LuxCoeff_TypeDef *lk);
 uint32_t SI1133_measureLuxUvif(struct si1133 *dev, float *lux, float *uvi);
 uint32_t SI1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi);
 uint32_t SI1133_getHardwareID(struct si1133 *dev, uint8_t *hardwareID);
 uint32_t SI1133_getMeasurementf(struct si1133 *dev, float *lux, float *uvi);
-uint32_t SI1133_getMeasurement(struct si1133 *dev, int32_t *lux, int32_t *uvi);
+uint32_t SI1133_getMeasurement(struct si1133 *dev, int32_t *lux,
+        int32_t *uvi);
 uint32_t SI1133_getIrqStatus(struct si1133 *dev, uint8_t *irqStatus);
 uint32_t SI1133_enableIrq0(struct si1133 *dev, bool enable);
 uint32_t si1133_config(struct si1133 *si1, struct si1133_cfg *cfg);

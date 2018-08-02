@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <string.h>
 
-
+#include "defs/error.h"
 #include "os/os.h"
 #include "os/os_mutex.h"
 #include "sysinit/sysinit.h"
@@ -14,16 +14,32 @@
 #include "sensor/light.h"
 #include "si1133/SI1133.h"
 #include "log/log.h"
+
+
 #include <stats/stats.h>
 
-#include "bsp/bsp.h"
-#include "hal/hal_gpio.h"
-#ifdef ARCH_sim
-#include "mcu/mcu_sim.h"
-#endif
-#include "console/console.h"
+//#include "console/console.h" // TODO delete after log is implemented
 
+STATS_SECT_START(si1133_stats)
+    STATS_SECT_ENTRY(read_errors)
+    STATS_SECT_ENTRY(write_errors)
+    STATS_SECT_ENTRY(mutex_errors)
+STATS_SECT_END
 
+/* Global variable used to hold stats data */
+STATS_SECT_DECL(si1133_stats) g_si1133_stats;
+
+/* Define the stats section and records */
+STATS_NAME_START(si1133_stats)
+    STATS_NAME(si1133_stats, read_errors)
+    STATS_NAME(si1133_stats, write_errors)
+    STATS_NAME(si1133_stats, mutex_errors)
+STATS_NAME_END(si1133_stats)
+
+#define LOG_MODULE_SI1133    (221)
+#define SI1133_INFO(...)     LOG_INFO(&_log, LOG_MODULE_SI1133, __VA_ARGS__)
+#define SI1133_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_SI1133, __VA_ARGS__)
+static struct log _log;
 
 /* Exports for the sensor API */
 static int si1133_sensor_read(struct sensor *, sensor_type_t,
@@ -37,7 +53,7 @@ static const struct sensor_driver g_si1133_sensor_driver = {
     si1133_sensor_get_config
 };
 
-/***************************************************************************/
+
 static SI1133_LuxCoeff_TypeDef lk = {
 
     {{0, 209}, {1665, 93}, {2064, 65}, {-2671, 234}},
@@ -51,7 +67,6 @@ static SI1133_LuxCoeff_TypeDef lk = {
      {-1503, 51831},
      {-1886, 58928}}};
 
-/***************************************************************************/
 static volatile int g_task1_loops;
 static SI1133_Coeff_TypeDef uk[2] = {{1281, 30902}, {-638, 46301}};
 static int32_t SI1133_calcPolyInner(int32_t input, int8_t fraction,
@@ -106,7 +121,7 @@ SI1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data)
         err = os_mutex_pend(dev->i2c_mutex, OS_WAIT_FOREVER);
         if (err != OS_OK)
         {
-            // TODO add log error message. See lis2mdl.c line 97-99
+            SI1133_ERR("Mutex error=%d\n", err);
             return err;
         }
     }
@@ -114,9 +129,9 @@ SI1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data)
     rc = hal_i2c_master_write(1, &data_struct, OS_TICKS_PER_SEC / 10, 0);
 
     if (rc) {
-        // TODO use log instead of console_printf()
-        console_printf("faild to write");
-        console_printf("\n");
+        SI1133_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
+                     itf->si_addr, reg, data);
+        STATS_INC(g_si1133_stats, write_errors);
     }
 
     if (dev->i2c_mutex) {
@@ -141,35 +156,38 @@ SI1133_registerRead(struct si1133 *dev, uint8_t reg, uint8_t *data)
     struct sensor_itf *itf = &dev->sensor.s_itf;
 
     struct hal_i2c_master_data data_struct = {
-        .address = itf->si_addr,  // i2c addres, TODO write as a argument to function
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &reg
     };
 
+
+
     if (dev->i2c_mutex) {
         err = os_mutex_pend(dev->i2c_mutex, OS_WAIT_FOREVER);
         if (err != OS_OK) {
-            // TODO add log error message. See lis2mdl.c line 97-99
+            SI1133_ERR("Mutex error=%d\n", err);
+            STATS_INC(g_si1133_stats, mutex_errors);
             return err;
         }
     }
-
-    rc = hal_i2c_master_write(1, &data_struct, OS_TICKS_PER_SEC / 10, 0); // TODO itf->si_num
+ 
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0);
 
     if (rc) {
-        console_printf("faild to write (for reading)");
-        console_printf("\n");
+        SI1133_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
+        STATS_INC(g_si1133_stats, write_errors);
         return rc;
     }
 
 
     data_struct.buffer = data;
 
-    rc = hal_i2c_master_read(1, &data_struct, OS_TICKS_PER_SEC / 10, 1); // TODO itf->si_num
+    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        console_printf("faild to read");
-        console_printf("\n");
+        SI1133_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
+        STATS_INC(g_si1133_stats, write_errors);
         return rc;
     }
 
@@ -206,7 +224,8 @@ SI1133_waitUntilSleep(struct si1133 *dev)
 
         if (ret != SI1133_OK) {
             retval = SI1133_ERROR_SLEEP_FAILED;
-            console_printf("Sleep faild \n");
+            SI1133_ERR("Failed to sleep \n");
+            STATS_INC(g_si1133_stats, write_errors);
             break;
         }
 
@@ -235,17 +254,17 @@ SI1133_registerBlockRead(struct si1133 *dev, uint8_t reg, uint8_t length,
     if(dev->i2c_mutex) {
         err = os_mutex_pend(dev->i2c_mutex, OS_WAIT_FOREVER);
         if (err != OS_OK) {
-            //TODO log error message
+            SI1133_ERR("Mutex error=%d\n", err);
             return err;
         }
     }
 
-    rc = hal_i2c_master_write(1, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
 
     data_struct.len = length;
     data_struct.buffer = data;
 
-    rc = hal_i2c_master_read(1, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
 
     if (dev->i2c_mutex) {
         err = os_mutex_release(dev->i2c_mutex);
@@ -286,18 +305,17 @@ SI1133_registerBlockWrite(struct si1133 *dev, uint8_t reg, uint8_t length,
     if (dev->i2c_mutex) {
         err = os_mutex_pend(dev->i2c_mutex, OS_WAIT_FOREVER);
         if (err != OS_OK) {
-            //HTS221_ERR("Mutex error=%d\n", err);
-            //STATS_INC(g_hts221_stats, mutex_errors);
+            SI1133_ERR("Mutex error=%d\n", err);
+            STATS_INC(g_si1133_stats, mutex_errors);
             return err;
         }
     }
 
-    rc = hal_i2c_master_write(1, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        //TODO log error not console_printf
-        console_printf("faild to write (block)");
-        console_printf("\n");
+        SI1133_ERR("Failed block write\n");
+        STATS_INC(g_si1133_stats, write_errors);
         return rc;
     }
 
@@ -335,7 +353,8 @@ SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
     }    
 
     if (retval != SI1133_OK) {
-        console_printf("Error wait to sleep, paramset \n");
+        SI1133_ERR("Failed to wait until sleep \n");
+        STATS_INC(g_si1133_stats, write_errors);
         return retval;
     }
 
@@ -349,6 +368,8 @@ SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
     retval = SI1133_registerBlockWrite(dev, SI1133_REG_HOSTIN0, 2,
         (uint8_t *)buffer);
     if (retval != SI1133_OK) {
+        SI1133_ERR("Failed to block write\n");
+        STATS_INC(g_si1133_stats, write_errors);
         return retval;
     }
 
@@ -384,11 +405,8 @@ SI1133_reset(struct si1133 *dev)
     os_time_delay(5);
 
     if(rc){
-        console_printf("faild to reset");
-        console_printf("\n");
-    } else{
-        console_printf("succeeded to reset");
-        console_printf("\n");
+        SI1133_ERR("Failed to reset for si1133\n");
+        STATS_INC(g_si1133_stats, write_errors);
     }
     return rc;
 }
@@ -590,7 +608,7 @@ SI1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi)
 
     /* Get the results */
     SI1133_measurementGet(dev, &samples);
-    //NRF_LOG_INFO("Raw vals %d, %d, %d, %d\r\n", samples.ch0, samples.ch1, samples.ch2, samples.ch3);
+    
     /* Convert the readings to lux */
     int64_t v = SI1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
     *lux = (v*1000) >> LUX_OUTPUT_FRACTION;
@@ -811,7 +829,7 @@ SI1133_measureLuxUvif(struct si1133 *dev, float *lux, float *uvi)
 
     /* Get the results */
     SI1133_measurementGet(dev, &samples);
-    //console_printf("Raw vals %d, %d, %d, %d\r\n", (int)samples.ch0, (int)samples.ch1, (int)samples.ch2, (int)samples.ch3);
+   
     /* Convert the readings to lux */
     *lux = (float)SI1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
     *lux = *lux / (1 << LUX_OUTPUT_FRACTION);
@@ -879,6 +897,8 @@ si1133_init(struct os_dev *dev, void *arg)
     si1 = (struct si1133 *) dev;
 
     si1->cfg.mask = SENSOR_TYPE_ALL;
+
+    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     sensor = &si1->sensor;
 

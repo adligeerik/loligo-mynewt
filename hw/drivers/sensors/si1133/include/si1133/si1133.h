@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-/***************************************************************************/
+
 #define X_ORDER_MASK 0x0070
 #define Y_ORDER_MASK 0x0007
 #define SIGN_MASK 0x0080
@@ -23,18 +23,18 @@ extern "C" {
 #define LUX_OUTPUT_FRACTION 12
 #define NUMCOEFF_LOW 9
 #define NUMCOEFF_HIGH 4
-/***************************************************************************/
+
 
 #define SI1133_OK 0x0000
 #define SI1133_ERROR_I2C_TRANSACTION_FAILED 0x0001
 #define SI1133_ERROR_SLEEP_FAILED 0x0002
 
-/***************************************************************************/
+
 struct si1133_cfg{
     uint8_t int_enable;
     sensor_type_t mask;
 };
-/***************************************************************************/
+
 struct si1133 {
     struct os_dev dev;
     struct sensor sensor;
@@ -43,7 +43,7 @@ struct si1133 {
     os_time_t last_read_time;
 };
 
-/***************************************************************************/
+
 typedef struct {
     uint8_t irq_status;
     int32_t ch0;
@@ -52,18 +52,18 @@ typedef struct {
     int32_t ch3;
 } SI1133_Samples_TypeDef;
 
-/***************************************************************************/
+
 typedef struct {
     int16_t info;
     uint16_t mag;
 } SI1133_Coeff_TypeDef;
 
-/***************************************************************************/
+
 typedef struct {
     SI1133_Coeff_TypeDef coeff_high[4];
     SI1133_Coeff_TypeDef coeff_low[9];
 } SI1133_LuxCoeff_TypeDef;
-/***************************************************************************/
+
 #define SI1133_REG_PART_ID 0x00
 #define SI1133_REG_HW_ID 0x01
 #define SI1133_REG_REV_ID 0x02
@@ -99,7 +99,7 @@ typedef struct {
 #define SI1133_REG_HOSTOUT23 0x2A
 #define SI1133_REG_HOSTOUT24 0x2B
 #define SI1133_REG_HOSTOUT25 0x2C
-/***************************************************************************/
+
 #define SI1133_PARAM_I2C_ADDR 0x00
 #define SI1133_PARAM_CH_LIST 0x01
 #define SI1133_PARAM_ADCCONFIG0 0x02
@@ -138,7 +138,7 @@ typedef struct {
 #define SI1133_PARAM_THRESHOLD2_H 0x29
 #define SI1133_PARAM_THRESHOLD2_L 0x2A
 #define SI1133_PARAM_BURST 0x2B
-/***************************************************************************/
+
 #define SI1133_CMD_RESET_CMD_CTR 0x00
 #define SI1133_CMD_RESET 0x01
 #define SI1133_CMD_NEW_ADDR 0x02
@@ -147,11 +147,11 @@ typedef struct {
 #define SI1133_CMD_START 0x13
 #define SI1133_CMD_PARAM_SET 0x80
 #define SI1133_CMD_PARAM_QUERY 0x40
-/***************************************************************************/
+
 #define SI1133_RSP0_CHIPSTAT_MASK 0xE0
 #define SI1133_RSP0_COUNTER_MASK 0x1F
 #define SI1133_RSP0_SLEEP 0x20
-/***************************************************************************/
+
 
 
 uint32_t SI1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data);

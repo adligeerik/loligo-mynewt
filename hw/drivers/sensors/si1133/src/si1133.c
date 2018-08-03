@@ -18,7 +18,6 @@
 
 #include <stats/stats.h>
 
-//#include "console/console.h" // TODO delete after log is implemented
 
 STATS_SECT_START(si1133_stats)
     STATS_SECT_ENTRY(read_errors)
@@ -54,7 +53,7 @@ static const struct sensor_driver g_si1133_sensor_driver = {
 };
 
 
-static SI1133_LuxCoeff_TypeDef lk = {
+static si1133_LuxCoeff_TypeDef lk = {
 
     {{0, 209}, {1665, 93}, {2064, 65}, {-2671, 234}},
     {{0, 0},
@@ -68,30 +67,30 @@ static SI1133_LuxCoeff_TypeDef lk = {
      {-1886, 58928}}};
 
 static volatile int g_task1_loops;
-static SI1133_Coeff_TypeDef uk[2] = {{1281, 30902}, {-638, 46301}};
-static int32_t SI1133_calcPolyInner(int32_t input, int8_t fraction,
+static si1133_Coeff_TypeDef uk[2] = {{1281, 30902}, {-638, 46301}};
+static int32_t si1133_calcPolyInner(int32_t input, int8_t fraction,
                                     uint16_t mag, int8_t shift);      
-static int32_t SI1133_calcEvalPoly(int32_t x, int32_t y,
+static int32_t si1133_calcEvalPoly(int32_t x, int32_t y,
                                    uint8_t input_fraction,
                                    uint8_t output_fraction, uint8_t num_coeff,
-                                   SI1133_Coeff_TypeDef *kp);
+                                   si1133_Coeff_TypeDef *kp);
 
 
 
 
 
 /**
- * @brief Read hardwareID from SI1133
+ * @brief Read hardwareID from si1133
  * 
  * @param hardwareID
  * 
  * @return 0x0000 if ok
  */
 uint32_t
-SI1133_getHardwareID(struct si1133 *dev, uint8_t *hardwareID)
+si1133_getHardwareID(struct si1133 *dev, uint8_t *hardwareID)
 {
     uint32_t rc;
-    rc = SI1133_registerRead(dev, SI1133_REG_PART_ID, hardwareID);
+    rc = si1133_registerRead(dev, SI1133_REG_PART_ID, hardwareID);
     return rc;
 }
 
@@ -103,7 +102,7 @@ SI1133_getHardwareID(struct si1133 *dev, uint8_t *hardwareID)
  * @return 0x0000 if ok
  */
 uint32_t
-SI1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data)
+si1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data)
 {
     
     int rc;
@@ -149,7 +148,7 @@ SI1133_registerWrite(struct si1133 *dev, uint8_t reg, uint8_t data)
  * @return  0x0000 if ok
  */
 uint32_t
-SI1133_registerRead(struct si1133 *dev, uint8_t reg, uint8_t *data)
+si1133_registerRead(struct si1133 *dev, uint8_t reg, uint8_t *data)
 {
     uint32_t rc;
     os_error_t err = 0;
@@ -200,12 +199,12 @@ SI1133_registerRead(struct si1133 *dev, uint8_t reg, uint8_t *data)
 }
 
 /**
- * @brief Wait until SI1133 is knwon ro be in sleep state
+ * @brief Wait until si1133 is knwon ro be in sleep state
  * 
  * @return 0x0000 if ok
  */
 uint32_t
-SI1133_waitUntilSleep(struct si1133 *dev)
+si1133_waitUntilSleep(struct si1133 *dev)
 {
     uint32_t ret;
     uint8_t response;
@@ -214,10 +213,10 @@ SI1133_waitUntilSleep(struct si1133 *dev)
 
     retval = SI1133_OK;
 
-    /* This loops until the SI1133 is known to be in its sleep state  */
+    /* This loops until the si1133 is known to be in its sleep state  */
     /* or if an i2c error occurs                                      */
     while (count < 5) {
-        ret = SI1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
+        ret = si1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
         if ((response & SI1133_RSP0_CHIPSTAT_MASK) == SI1133_RSP0_SLEEP) {
             break;
         }
@@ -236,7 +235,7 @@ SI1133_waitUntilSleep(struct si1133 *dev)
 }
 
 uint32_t
-SI1133_registerBlockRead(struct si1133 *dev, uint8_t reg, uint8_t length,
+si1133_registerBlockRead(struct si1133 *dev, uint8_t reg, uint8_t length,
     uint8_t *data)
 {
     uint32_t rc;
@@ -280,7 +279,7 @@ SI1133_registerBlockRead(struct si1133 *dev, uint8_t reg, uint8_t length,
  * @param data,
  */
 uint32_t
-SI1133_registerBlockWrite(struct si1133 *dev, uint8_t reg, uint8_t length,
+si1133_registerBlockWrite(struct si1133 *dev, uint8_t reg, uint8_t length,
     uint8_t *data)
 {
 
@@ -336,7 +335,7 @@ SI1133_registerBlockWrite(struct si1133 *dev, uint8_t reg, uint8_t length,
  * @return, Returns 0x0000 for OK
  */
 uint32_t
-SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
+si1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
 {
 
     uint32_t retval = 1;
@@ -348,7 +347,7 @@ SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
     int i = 0;
 
     while (retval != SI1133_OK && i <= 2){
-        retval = SI1133_waitUntilSleep(dev);
+        retval = si1133_waitUntilSleep(dev);
         i ++;
     }    
 
@@ -359,13 +358,13 @@ SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
     }
 
 
-    SI1133_registerRead(dev, SI1133_REG_RESPONSE0, &response_stored);
+    si1133_registerRead(dev, SI1133_REG_RESPONSE0, &response_stored);
     response_stored &= SI1133_RSP0_COUNTER_MASK;
 
     buffer[0] = value;
     buffer[1] = 0x80 + (address & 0x3F);
 
-    retval = SI1133_registerBlockWrite(dev, SI1133_REG_HOSTIN0, 2,
+    retval = si1133_registerBlockWrite(dev, SI1133_REG_HOSTIN0, 2,
         (uint8_t *)buffer);
     if (retval != SI1133_OK) {
         SI1133_ERR("Failed to block write\n");
@@ -378,7 +377,7 @@ SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
     /* Expect a change in the response register */
     while (count < 5) {
 
-        retval = SI1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
+        retval = si1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
         if ((response & SI1133_RSP0_COUNTER_MASK) != response_stored) {
             break;
         } else {
@@ -394,14 +393,14 @@ SI1133_paramSet(struct si1133 *dev, uint8_t address, uint8_t value)
 }
 
 /**
- * @brief reset SI1133
+ * @brief reset si1133
  */
 uint32_t
-SI1133_reset(struct si1133 *dev)
+si1133_reset(struct si1133 *dev)
 {
     uint32_t rc;
     os_time_delay(5);
-    rc = SI1133_registerWrite(dev, SI1133_REG_COMMAND, SI1133_CMD_RESET);
+    rc = si1133_registerWrite(dev, SI1133_REG_COMMAND, SI1133_CMD_RESET);
     os_time_delay(5);
 
     if(rc){
@@ -412,7 +411,7 @@ SI1133_reset(struct si1133 *dev)
 }
 
 int32_t
-SI1133_calcPolyInner(int32_t input, int8_t fraction, uint16_t mag,
+si1133_calcPolyInner(int32_t input, int8_t fraction, uint16_t mag,
                              int8_t shift)
 {
 
@@ -428,9 +427,9 @@ SI1133_calcPolyInner(int32_t input, int8_t fraction, uint16_t mag,
 }
 
 int32_t
-SI1133_calcEvalPoly(int32_t x, int32_t y, uint8_t input_fraction,
+si1133_calcEvalPoly(int32_t x, int32_t y, uint8_t input_fraction,
                             uint8_t output_fraction, uint8_t num_coeff,
-                            SI1133_Coeff_TypeDef *kp)
+                            si1133_Coeff_TypeDef *kp)
 {
 
     uint8_t info, x_order, y_order, counter;
@@ -461,9 +460,9 @@ SI1133_calcEvalPoly(int32_t x, int32_t y, uint8_t input_fraction,
             output += sign * mag << output_fraction;
         } else {
             if (x_order > 0) {
-                x1 = SI1133_calcPolyInner(x, input_fraction, mag, shift);
+                x1 = si1133_calcPolyInner(x, input_fraction, mag, shift);
                 if (x_order > 1) {
-                    x2 = SI1133_calcPolyInner(x, input_fraction, mag, shift);
+                    x2 = si1133_calcPolyInner(x, input_fraction, mag, shift);
                 } else {
                     x2 = 1;
                 }
@@ -473,9 +472,9 @@ SI1133_calcEvalPoly(int32_t x, int32_t y, uint8_t input_fraction,
             }
 
             if (y_order > 0) {
-                y1 = SI1133_calcPolyInner(y, input_fraction, mag, shift);
+                y1 = si1133_calcPolyInner(y, input_fraction, mag, shift);
                 if (y_order > 1) {
-                    y2 = SI1133_calcPolyInner(y, input_fraction, mag, shift);
+                    y2 = si1133_calcPolyInner(y, input_fraction, mag, shift);
                 } else {
                     y2 = 1;
                 }
@@ -498,27 +497,27 @@ SI1133_calcEvalPoly(int32_t x, int32_t y, uint8_t input_fraction,
 }
 
 uint32_t
-SI1133_deInit(struct si1133 *dev)
+si1133_deInit(struct si1133 *dev)
 {
 
     uint32_t retval;
 
-    retval = SI1133_paramSet(dev, SI1133_PARAM_CH_LIST, 0x3f);
-    retval += SI1133_measurementPause(dev);
-    retval += SI1133_waitUntilSleep(dev);
+    retval = si1133_paramSet(dev, SI1133_PARAM_CH_LIST, 0x3f);
+    retval += si1133_measurementPause(dev);
+    retval += si1133_waitUntilSleep(dev);
 
     return retval;
 }
 
 
 uint32_t
-SI1133_measurementGet(struct si1133 *dev, SI1133_Samples_TypeDef *samples)
+si1133_measurementGet(struct si1133 *dev, si1133_Samples_TypeDef *samples)
 {
 
     uint8_t buffer[13];
     uint32_t retval;
 
-    retval = SI1133_registerBlockRead(dev, SI1133_REG_IRQ_STATUS, 13, buffer);
+    retval = si1133_registerBlockRead(dev, SI1133_REG_IRQ_STATUS, 13, buffer);
 
     samples->irq_status = buffer[0];
 
@@ -554,30 +553,30 @@ SI1133_measurementGet(struct si1133 *dev, SI1133_Samples_TypeDef *samples)
 }
 
 int32_t
-SI1133_getUv(int32_t uv, SI1133_Coeff_TypeDef *uk)
+si1133_getUv(int32_t uv, si1133_Coeff_TypeDef *uk)
 {
 
     int32_t uvi;
 
-    uvi = SI1133_calcEvalPoly(0, uv, UV_INPUT_FRACTION, UV_OUTPUT_FRACTION,
+    uvi = si1133_calcEvalPoly(0, uv, UV_INPUT_FRACTION, UV_OUTPUT_FRACTION,
                               UV_NUMCOEFF, uk);
 
     return uvi;
 }
 
 int32_t
-SI1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir,
-                      SI1133_LuxCoeff_TypeDef *lk)
+si1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir,
+                      si1133_LuxCoeff_TypeDef *lk)
 {
 
     int32_t lux;
 
     if ((vis_high > ADC_THRESHOLD) || (ir > ADC_THRESHOLD)) {
-        lux = SI1133_calcEvalPoly(vis_high, ir, INPUT_FRACTION_HIGH,
+        lux = si1133_calcEvalPoly(vis_high, ir, INPUT_FRACTION_HIGH,
                                   LUX_OUTPUT_FRACTION, NUMCOEFF_HIGH,
                                   &(lk->coeff_high[0]));
     } else {
-        lux = SI1133_calcEvalPoly(vis_low, ir, INPUT_FRACTION_LOW,
+        lux = si1133_calcEvalPoly(vis_low, ir, INPUT_FRACTION_LOW,
                                   LUX_OUTPUT_FRACTION, NUMCOEFF_LOW,
                                   &(lk->coeff_low[0]));
     }
@@ -586,35 +585,35 @@ SI1133_getLux(int32_t vis_high, int32_t vis_low, int32_t ir,
 }
 
 uint32_t
-SI1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi)
+si1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi)
 {
 
-    SI1133_Samples_TypeDef samples;
+    si1133_Samples_TypeDef samples;
     uint32_t retval;
     uint8_t response;
 
     /* Force measurement */
-    retval = SI1133_measurementForce(dev);
+    retval = si1133_measurementForce(dev);
 
     /* Go to sleep while the sensor does the conversion */
     os_time_delay(20);
 
     /* Check if the measurement finished, if not then wait */
-    retval += SI1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
+    retval += si1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
     while (response != 0x0F) {
         os_time_delay(1);
-        retval += SI1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
+        retval += si1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
     }
 
     /* Get the results */
-    SI1133_measurementGet(dev, &samples);
+    si1133_measurementGet(dev, &samples);
     
     /* Convert the readings to lux */
-    int64_t v = SI1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
+    int64_t v = si1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
     *lux = (v*1000) >> LUX_OUTPUT_FRACTION;
 
     /* Convert the readings to UV index */
-    v = SI1133_getUv(samples.ch0, uk);
+    v = si1133_getUv(samples.ch0, uk);
     *uvi = (v*1000) >> UV_OUTPUT_FRACTION;
 
     return retval;
@@ -624,7 +623,7 @@ SI1133_measureLuxUvi(struct si1133 *dev, int32_t *lux, int32_t *uvi)
  * @param command
  */
 static uint32_t
-SI1133_sendCmd(struct si1133 *dev, uint8_t command)
+si1133_sendCmd(struct si1133 *dev, uint8_t command)
 {
 
     uint8_t response;
@@ -633,7 +632,7 @@ SI1133_sendCmd(struct si1133 *dev, uint8_t command)
     uint32_t ret;
 
     /* Get the response register contents */
-    ret = SI1133_registerRead(dev, SI1133_REG_RESPONSE0, &response_stored);
+    ret = si1133_registerRead(dev, SI1133_REG_RESPONSE0, &response_stored);
     if (ret != SI1133_OK) {
         return ret;
     }
@@ -642,7 +641,7 @@ SI1133_sendCmd(struct si1133 *dev, uint8_t command)
 
     /* Double-check the response register is consistent */
     while (count < 5) {
-        ret = SI1133_waitUntilSleep(dev);
+        ret = si1133_waitUntilSleep(dev);
         if (ret != SI1133_OK) {
             return ret;
         }
@@ -651,7 +650,7 @@ SI1133_sendCmd(struct si1133 *dev, uint8_t command)
             break;
         }
 
-        ret = SI1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
+        ret = si1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
 
         if ((response & SI1133_RSP0_COUNTER_MASK) == response_stored) {
             break;
@@ -668,7 +667,7 @@ SI1133_sendCmd(struct si1133 *dev, uint8_t command)
     }
 
     /* Send the command */
-    ret = SI1133_registerWrite(dev, SI1133_REG_COMMAND, command);
+    ret = si1133_registerWrite(dev, SI1133_REG_COMMAND, command);
     if (ret != SI1133_OK) {
         return ret;
     }
@@ -681,7 +680,7 @@ SI1133_sendCmd(struct si1133 *dev, uint8_t command)
             break;
         }
 
-        ret = SI1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
+        ret = si1133_registerRead(dev, SI1133_REG_RESPONSE0, &response);
         if ((response & SI1133_RSP0_COUNTER_MASK) != response_stored) {
             break;
         } else {
@@ -696,22 +695,22 @@ SI1133_sendCmd(struct si1133 *dev, uint8_t command)
     return SI1133_OK;
 }
 
-uint32_t SI1133_measurementForce(struct si1133 *dev)
+uint32_t si1133_measurementForce(struct si1133 *dev)
 {
-    return SI1133_sendCmd(dev, SI1133_CMD_FORCE_CH);
+    return si1133_sendCmd(dev, SI1133_CMD_FORCE_CH);
 }
 
-uint32_t SI1133_resetCmdCtr(struct si1133 *dev)
+uint32_t si1133_resetCmdCtr(struct si1133 *dev)
 {
-    return SI1133_sendCmd(dev, SI1133_CMD_RESET_CMD_CTR);
+    return si1133_sendCmd(dev, SI1133_CMD_RESET_CMD_CTR);
 }
 
-uint32_t SI1133_measurementStart(struct si1133 *dev)
+uint32_t si1133_measurementStart(struct si1133 *dev)
 {
-    return SI1133_sendCmd(dev, SI1133_CMD_START);
+    return si1133_sendCmd(dev, SI1133_CMD_START);
 }
 
-uint32_t SI1133_paramRead(struct si1133 *dev, uint8_t address)
+uint32_t si1133_paramRead(struct si1133 *dev, uint8_t address)
 {
 
     uint8_t retval;
@@ -719,80 +718,80 @@ uint32_t SI1133_paramRead(struct si1133 *dev, uint8_t address)
 
     cmd = 0x40 + (address & 0x3F);
 
-    retval = SI1133_sendCmd(dev, cmd);
+    retval = si1133_sendCmd(dev, cmd);
     if (retval != SI1133_OK) {
         return retval;
     }
 
-    SI1133_registerRead(dev, SI1133_REG_RESPONSE1, &retval);
+    si1133_registerRead(dev, SI1133_REG_RESPONSE1, &retval);
 
     return retval;
 }
 
 uint32_t
-SI1133_getMeasurementf(struct si1133 *dev, float *lux, float *uvi)
+si1133_getMeasurementf(struct si1133 *dev, float *lux, float *uvi)
 {
 
-    SI1133_Samples_TypeDef samples;
+    si1133_Samples_TypeDef samples;
     uint32_t retval;
 
     /* Get the results */
-    retval = SI1133_measurementGet(dev, &samples);
+    retval = si1133_measurementGet(dev, &samples);
 
     /* Convert the readings to lux */
-    *lux = (float)SI1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
+    *lux = (float)si1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
     *lux = *lux / (1 << LUX_OUTPUT_FRACTION);
 
     /* Convert the readings to UV index */
-    *uvi = (float)SI1133_getUv(samples.ch0, uk);
+    *uvi = (float)si1133_getUv(samples.ch0, uk);
     *uvi = *uvi / (1 << UV_OUTPUT_FRACTION);
 
     return retval;
 }
 
 uint32_t
-SI1133_getMeasurement(struct si1133 *dev, int32_t *lux, int32_t *uvi)
+si1133_getMeasurement(struct si1133 *dev, int32_t *lux, int32_t *uvi)
 {
 
-    SI1133_Samples_TypeDef samples;
+    si1133_Samples_TypeDef samples;
     uint32_t retval;
 
     /* Get the results */
-    retval = SI1133_measurementGet(dev, &samples);
+    retval = si1133_measurementGet(dev, &samples);
 
     /* Convert the readings to lux */
-    int64_t v = SI1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
+    int64_t v = si1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
     *lux = (int32_t)((v*1000) >> LUX_OUTPUT_FRACTION);
 
     /* Convert the readings to UV index */
-    v = SI1133_getUv(samples.ch0, uk);
+    v = si1133_getUv(samples.ch0, uk);
     *uvi = (int32_t)((v*1000) >> UV_OUTPUT_FRACTION);
     
     return retval;
 }
 
 uint32_t
-SI1133_getIrqStatus(struct si1133 *dev, uint8_t *irqStatus)
+si1133_getIrqStatus(struct si1133 *dev, uint8_t *irqStatus)
 {
 
     uint32_t retval;
 
     /* Read the IRQ status register */
-    retval = SI1133_registerRead(dev, SI1133_REG_IRQ_STATUS, irqStatus);
+    retval = si1133_registerRead(dev, SI1133_REG_IRQ_STATUS, irqStatus);
 
     return retval;
 }
 
 uint32_t
-SI1133_enableIrq0(struct si1133 *dev, bool enable)
+si1133_enableIrq0(struct si1133 *dev, bool enable)
 {
 
     uint32_t retval;
 
     if (enable) {
-        retval = SI1133_registerWrite(dev, SI1133_REG_IRQ_ENABLE, 0x0F);
+        retval = si1133_registerWrite(dev, SI1133_REG_IRQ_ENABLE, 0x0F);
     } else {
-        retval = SI1133_registerWrite(dev, SI1133_REG_IRQ_ENABLE, 0);
+        retval = si1133_registerWrite(dev, SI1133_REG_IRQ_ENABLE, 0);
     }
 
     //APP_ERROR_CHECK(retval);
@@ -807,44 +806,44 @@ SI1133_enableIrq0(struct si1133 *dev, bool enable)
  * @param uvi, ptr to where to put uv measurement
  */
 uint32_t
-SI1133_measureLuxUvif(struct si1133 *dev, float *lux, float *uvi)
+si1133_measureLuxUvif(struct si1133 *dev, float *lux, float *uvi)
 {
 
-    SI1133_Samples_TypeDef samples;
+    si1133_Samples_TypeDef samples;
     uint32_t retval;
     uint8_t response;
 
     /* Force measurement */
-    retval = SI1133_measurementForce(dev);
+    retval = si1133_measurementForce(dev);
 
     /* Go to sleep while the sensor does the conversion */
     os_time_delay(20);
 
     /* Check if the measurement finished, if not then wait */
-    retval += SI1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
+    retval += si1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
     while (response != 0x0F) {
         os_time_delay(10);
-        retval += SI1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
+        retval += si1133_registerRead(dev, SI1133_REG_IRQ_STATUS, &response);
     }
 
     /* Get the results */
-    SI1133_measurementGet(dev, &samples);
+    si1133_measurementGet(dev, &samples);
    
     /* Convert the readings to lux */
-    *lux = (float)SI1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
+    *lux = (float)si1133_getLux(samples.ch1, samples.ch3, samples.ch2, &lk);
     *lux = *lux / (1 << LUX_OUTPUT_FRACTION);
 
     /* Convert the readings to UV index */
-    *uvi = (float)SI1133_getUv(samples.ch0, uk);
+    *uvi = (float)si1133_getUv(samples.ch0, uk);
     *uvi = *uvi / (1 << UV_OUTPUT_FRACTION);
 
     return retval;
 }
 
 uint32_t
-SI1133_measurementPause(struct si1133 *dev)
+si1133_measurementPause(struct si1133 *dev)
 {
-    return SI1133_sendCmd(dev, SI1133_CMD_PAUSE_CH);
+    return si1133_sendCmd(dev, SI1133_CMD_PAUSE_CH);
 }
 
 uint32_t
@@ -856,32 +855,37 @@ si1133_config(struct si1133 *si1, struct si1133_cfg *cfg)
     /*Allow some time for the sensor to power up*/
     os_time_delay(10);
     
-    rc = SI1133_reset(si1);
+    rc = si1133_reset(si1);
 
     os_time_delay(10);
+    
+    rc += si1133_paramSet(si1, SI1133_PARAM_CH_LIST, 0x0f);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCCONFIG0, 0x78);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCSENS0, 0x11);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCPOST0, 0x40);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCCONFIG1, 0x4d);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCSENS1, 0x91);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCPOST1, 0x40);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCCONFIG2, 0x41);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCSENS2, 0x91);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCPOST2, 0x50);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCCONFIG3, 0x4d);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCSENS3, 0x17);
+    rc += si1133_paramSet(si1, SI1133_PARAM_ADCPOST3, 0x40);
 
-    rc += SI1133_paramSet(si1, SI1133_PARAM_CH_LIST, 0x0f);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCCONFIG0, 0x78);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCSENS0, 0x11);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCPOST0, 0x40);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCCONFIG1, 0x4d);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCSENS1, 0x91);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCPOST1, 0x40);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCCONFIG2, 0x41);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCSENS2, 0x91);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCPOST2, 0x50);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCCONFIG3, 0x4d);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCSENS3, 0x17);
-    rc += SI1133_paramSet(si1, SI1133_PARAM_ADCPOST3, 0x40);
-
-    rc += SI1133_registerWrite(si1, SI1133_REG_IRQ_ENABLE, 0x0f);
+    rc += si1133_registerWrite(si1, SI1133_REG_IRQ_ENABLE, 0x0f);
     si1->cfg.int_enable = cfg->int_enable;
 
     uint8_t irq;
-    rc += SI1133_getIrqStatus(si1, &irq);
+    rc += si1133_getIrqStatus(si1, &irq);
 
     rc += sensor_set_type_mask(&(si1->sensor), cfg->mask);
     si1->cfg.mask = cfg->mask;
+
+    if (rc) {
+        SI1133_ERR("si1133 config fail");
+    }
+    
 
     return rc;
 } 
@@ -941,11 +945,12 @@ si1133_sensor_read(struct sensor *sensor, sensor_type_t type,
     si1 = (struct si1133 *) SENSOR_GET_DEVICE(sensor);
 
     if (type & (SENSOR_TYPE_LIGHT)){
-        rc = SI1133_measureLuxUvi(si1, &lux, &uvi);
+        rc = si1133_measureLuxUvi(si1, &lux, &uvi);
 
         if(rc) {
             return rc;
         }
+
 
         sld.sld_lux = lux;
         sld.sld_ir = (uint16_t)uvi;

@@ -952,8 +952,11 @@ si1133_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
 
-        sld.sld_lux = lux;
+        sld.sld_lux = (uint32_t)lux;
         sld.sld_ir = (uint16_t)uvi;
+        sld.sld_ir_is_valid = 1;
+        sld.sld_lux_is_valid = 1;
+        sld.sld_full_is_valid = 0;
 
         rc = data_func(sensor, data_arg, &sld, SENSOR_TYPE_LIGHT);
         if (rc) {

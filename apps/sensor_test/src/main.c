@@ -140,11 +140,11 @@ int sensor_data_cb(struct sensor* sensor, void *arg, void *data, sensor_type_t t
         if (sld->sld_full_is_valid){ 
             console_printf("full = %s ", sensor_ftostr(sld->sld_full, tmpstr, 13));
         }
-        if (sld->sld_ir_is_valid){ 
-            console_printf("ir = %s ", sensor_ftostr(sld->sld_ir, tmpstr, 13));
-        }
         if (sld->sld_lux_is_valid){ 
             console_printf("lux = %s ", sensor_ftostr(sld->sld_lux, tmpstr, 13));
+        }
+        if (sld->sld_ir_is_valid){ 
+            console_printf("uvi = %s ", sensor_ftostr(sld->sld_ir, tmpstr, 13));
         }
     console_printf("\n");
     }
@@ -158,13 +158,7 @@ int sensor_data_cb(struct sensor* sensor, void *arg, void *data, sensor_type_t t
 static void sensor_timer_ev_cb(struct os_event *ev) {
     int rc;
     struct sensor *s;
-    sensor_type_t sensor_types[] = {SENSOR_TYPE_ACCELEROMETER,
-                                    SENSOR_TYPE_GYROSCOPE,
-                                    SENSOR_TYPE_MAGNETIC_FIELD,
-                                    SENSOR_TYPE_PRESSURE,
-                                    SENSOR_TYPE_RELATIVE_HUMIDITY,
-                                    SENSOR_TYPE_TEMPERATURE,
-                                    SENSOR_TYPE_LIGHT,
+    sensor_type_t sensor_types[] = {SENSOR_TYPE_LIGHT,
                                     SENSOR_TYPE_NONE};
         
     assert(ev != NULL);
@@ -185,7 +179,7 @@ static void sensor_timer_ev_cb(struct os_event *ev) {
         i++;
     }
     
-    os_callout_reset(&sensor_callout, OS_TICKS_PER_SEC*5);
+    os_callout_reset(&sensor_callout, OS_TICKS_PER_SEC/4);
 }
 
 

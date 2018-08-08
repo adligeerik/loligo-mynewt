@@ -137,14 +137,14 @@ int sensor_data_cb(struct sensor* sensor, void *arg, void *data, sensor_type_t t
     if (type == SENSOR_TYPE_LIGHT){
         sld = (struct sensor_light_data *) data;
         console_printf("ambient light ");
-        if (sld->sld_full_is_valid){ 
-            console_printf("full = %s ", sensor_ftostr(sld->sld_full, tmpstr, 13));
+        if (sld->sld_full_is_valid) {
+            console_printf("Full = %u, ", sld->sld_full);
         }
-        if (sld->sld_lux_is_valid){ 
-            console_printf("lux = %s ", sensor_ftostr(sld->sld_lux, tmpstr, 13));
+        if (sld->sld_lux_is_valid) {
+            console_printf("Lux = %u, ", (unsigned int)sld->sld_lux);
         }
-        if (sld->sld_ir_is_valid){ 
-            console_printf("uvi = %s ", sensor_ftostr(sld->sld_ir, tmpstr, 13));
+        if (sld->sld_ir_is_valid) {
+            console_printf("UV = %u", sld->sld_ir);
         }
     console_printf("\n");
     }
@@ -179,7 +179,7 @@ static void sensor_timer_ev_cb(struct os_event *ev) {
         i++;
     }
     
-    os_callout_reset(&sensor_callout, OS_TICKS_PER_SEC/4);
+    os_callout_reset(&sensor_callout, OS_TICKS_PER_SEC);
 }
 
 

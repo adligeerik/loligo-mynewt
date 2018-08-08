@@ -959,10 +959,9 @@ si1133_sensor_read(struct sensor *sensor, sensor_type_t type,
         if(rc) {
             return rc;
         }
-        //console_printf("%ld\n", (long)uvii);
 
-        sld.sld_lux = lux;
-        sld.sld_ir = uvi;
+        sld.sld_lux = luxi;
+        sld.sld_ir = uvii;
         sld.sld_ir_is_valid = 1;
         sld.sld_lux_is_valid = 1;
         sld.sld_full_is_valid = 0;

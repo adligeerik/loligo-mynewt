@@ -13,7 +13,9 @@ nrfjprog -f NRF52 -e
 
 ```
 
+
 Build and load the bootloader:
+
 
 ```
 newt build blueberry_boot
